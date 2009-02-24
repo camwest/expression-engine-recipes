@@ -1,4 +1,4 @@
-namespace :bbt do  
+namespace :ee do  
   desc "runs git pull origin master in httpdocs on the server"  
   task :deploy do
     cmd = [
@@ -40,6 +40,6 @@ namespace :bbt do
     system "bzcat /tmp/#{application}.sql.gz | mysql -u root #{dbname}"
   end
   
-  # before "bbt:deploy", "bbt:prepare_deploy"  
-  before "bbt:deploy", "bbt:git_push"
+  # before "ee:deploy", "ee:prepare_deploy"  
+  before "ee:deploy", "ee:git_push"
 end
