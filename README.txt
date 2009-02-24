@@ -1,4 +1,4 @@
-= expression-engine-recipes
+<h2>expression-engine-recipes</h2>
 
 == DESCRIPTION:
 
