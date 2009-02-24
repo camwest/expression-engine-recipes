@@ -1,38 +1,16 @@
-<h2>expression-engine-recipes</h2>
+h2. expression-engine-recipes
 
-== DESCRIPTION:
+h3. DESCRIPTION:
 
 A set of handy tasks to help creating and deploying Expression Engine websites.
 
-== REQUIREMENTS:
+h3. REQUIREMENTS:
 
 * capistrano (http://capify.org) > 2.5.3, but recommended with > 2.2.0
 
 * NOTE: Currently only experimental and working with Git. svn support may come later.
 
-== INSTALL: 
-  $ gem sources - a http://gems.github.com/ (you only need to do this once)
-  $ gem install camwest-expression-engine-recipes
-  
-== SOURCE:
-
-expression-engine-recipes's git repo is available at GitHub, which can be browsed at:
-
-  http://github.com/camwest/expression-engine-recipes
-  
-and cloned from:
-
-  git://github.com/camwest/expression-engine-recipes.git
-  
-== USAGE:
-
-= Include in capistrano
-
-In your deploy.rb, simply include this line at the top:
-
-require 'expression-engine-recipes/recipes'
-
-== LICENSE:
+h3. LICENSE:
 
 Copyright (c) 2008 Big Bang Technology Inc.
 
