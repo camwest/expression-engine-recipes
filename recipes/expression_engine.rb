@@ -68,10 +68,44 @@ namespace :ee do
     
     #import the database
     run("bzcat #{local_backup_file}.bz2 | mysql -u #{dbuser} --password=\"#{dbpass}\" #{dbname}", { :shell => false})
-    
-    
   end
   
-  # before "ee:deploy", "ee:prepare_deploy"  
+  task :update_file_upload_paths do
+    
+    #set the file name
+    now = Time.now
+    creation_time = [now.year, now.month, now.day, now.hour, now.min, now.sec].join('-')
+
+    set :upload_file_name, "/tmp/#{dbname}_upload_locations-#{creation_time}.txt"
+    
+    #dump a list of file upload paths
+    run "mysql -u #{dbuser} --password=\"#{dbpass}\" --database=#{dbname} --execute=\"SELECT id, url from exp_upload_prefs INTO OUTFILE '#{upload_file_name}'\""
+    
+    #get the file upload paths locally
+    get("#{upload_file_name}", "#{upload_file_name}")
+  
+    urls = []
+
+    #open tthe file
+    file = File.open("#{upload_file_name}")
+    file.readlines.each do |line|
+      
+      db_row = line.split("\t")
+      row_id = db_row[0]
+      upload_path = db_row[1]
+      
+      server_path = "#{path_to_src_dir}/public#{upload_path}"
+      
+      #update the permissions while we're here
+      run "chmod 777 #{server_path}"
+      
+      #for each entry update the database
+      run "mysql -u #{dbuser} --password=\"#{dbpass}\" --database=#{dbname} --execute=\"UPDATE exp_upload_prefs SET server_path='#{server_path}' WHERE id = #{row_id}\""
+    end
+
+  end
+  
+  after "ee:deploy_database", "ee:update_file_upload_paths"
+  
   before "ee:deploy", "ee:git_push"
 end
