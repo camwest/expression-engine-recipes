@@ -22,7 +22,14 @@ namespace :ee do
     now = Time.now
     run "mkdir -p db_backups"
     backup_time = [now.year, now.month, now.day, now.hour, now.min, now.sec].join('-')
-    set :backup_file, "db_backups/bbdb-snapshot-#{backup_time}.sql"
+    set :backup_file, "db_backups/#{dbname}-snapshot-#{backup_time}.sql"
+  end
+
+  task :local_backup_name do
+    now = Time.now
+    run "mkdir -p db_backups_from_local"
+    backup_time = [now.year, now.month, now.day, now.hour, now.min, now.sec].join('-')
+    set :local_backup_file, "db_backups_from_local/#{dbname}-snapshot-#{backup_time}.sql"
   end
   
   desc "dumps a database to /db_backups"
@@ -33,11 +40,36 @@ namespace :ee do
     end
   end
   
+  task :local_dump do
+    system "mysqldump --add-drop-table -u root #{dbname} | bzip2 -c > /tmp/#{dbname}-snapshot.sql.bz2"
+  end
+  
   task :clone_to_local do
     backup_name
     dump
     get "#{backup_file}.bz2", "/tmp/#{application}.sql.gz"
     system "bzcat /tmp/#{application}.sql.gz | mysql -u root #{dbname}"
+  end
+  
+  desc "Pushes the database on to staging"
+  task :deploy_database do
+    #first backup the database
+    backup_name
+    dump
+    
+    #dump a local copy of the database
+    local_dump
+    
+    #create the local backup directory on the server if it doesn't exist    
+    local_backup_name
+    
+    #upload the file    
+    put(File.read("/tmp/#{dbname}-snapshot.sql.bz2"), "#{local_backup_file}.bz2", :mode => 0666)
+    
+    #import the database
+    run("bzcat #{local_backup_file}.bz2 | mysql -u #{dbuser} --password=\"#{dbpass}\" #{dbname}", { :shell => false})
+    
+    
   end
   
   # before "ee:deploy", "ee:prepare_deploy"  
