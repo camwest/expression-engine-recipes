@@ -70,6 +70,7 @@ namespace :ee do
     run("bzcat #{local_backup_file}.bz2 | mysql -u #{dbuser} --password=\"#{dbpass}\" #{dbname}", { :shell => false})
   end
   
+  desc "Updates the file paths on production / staging"
   task :update_file_upload_paths do
     
     #set the file name
@@ -102,10 +103,29 @@ namespace :ee do
       #for each entry update the database
       run "mysql -u #{dbuser} --password=\"#{dbpass}\" --database=#{dbname} --execute=\"UPDATE exp_upload_prefs SET server_path='#{server_path}' WHERE id = #{row_id}\""
     end
-
   end
   
-  after "ee:deploy_database", "ee:update_file_upload_paths"
+  desc "Copies any uploads from the server to the same folder locally"
+  task :clone_uploads_to_local do
+    cmd = [
+      "cd #{path_to_src_dir}",
+      "tar -cjf uploads.tar #{path_to_uploads_dir}"
+    ].join(" && ")    
+    
+    run cmd
+
+    get("#{path_to_src_dir}/uploads.tar", "/tmp/uploads.tar")
+       
+    run "rm -Rf #{path_to_src_dir}/uploads.tar"
+    
+    cmd = [
+      "tar -xvf /tmp/uploads.tar",
+      "rm -Rf /tmp/uploads.tar"
+    ].join(" && ")    
+    
+    system cmd
+  end
   
+  after "ee:deploy_database", "ee:update_file_upload_paths"  
   before "ee:deploy", "ee:git_push"
 end
